@@ -1,10 +1,11 @@
-from flask_migrate import Migrate, MigrateCommand
-from flask_script import Manager
-from flask import Flask
-from project.app.models import User
-from project.app import database, app
+import unittest
 
-migrate = Migrate(app,database)
+from flask import Flask
+from flask_migrate import MigrateCommand
+from flask_script import Manager
+
+from project.app import app, database, migrate
+from project.app.models import *
 
 manager = Manager(app)
 
@@ -18,6 +19,21 @@ def create_db():
 @manager.command
 def drop_db():
     database.drop_all()
+
+@manager.command
+def test():
+
+    """
+     test cli command used to trigger test
+
+    """
+    tests = unittest.TestLoader().discover('project/app/tests', pattern='test*.py')
+    result = unittest.TextTestRunner(verbosity=2).run(tests)
+    if result.wasSuccessful():
+        return 0
+    return 1
+
+
 
 
 if __name__ == "__main__":

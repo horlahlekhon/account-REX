@@ -1,13 +1,16 @@
 alembic==1.0.10
+asn1crypto==0.24.0
 autopep8==1.4.4
 bcrypt==3.1.6
 cffi==1.12.3
 Click==7.0
+cryptography==2.6.1
 Flask==1.0.2
 Flask-Bcrypt==0.7.1
 Flask-Migrate==2.4.0
 Flask-Script==2.0.6
 Flask-SQLAlchemy==2.3.2
+Flask-Testing==0.7.1
 itsdangerous==1.1.0
 Jinja2==2.10.1
 Mako==1.0.10

@@ -3,7 +3,8 @@ from project.app.models.base import Base, ModelMixin
 import uuid
 import datetime
 import jwt
-
+import json
+from ...app.misc.utils import DateTimeEncoder
 
 
 class User(Base):
@@ -42,17 +43,17 @@ class User(Base):
         """
         #  TODO  what happens when this function is passed a None type this can happen if an object is required and it doesnt exist in db ?
         if user:
-            return {"id": user.id, "name": user.name, "email": user.email, "created_on":user.created_on, "last_update":user.updated_on, "country": user.country,"is_admin": user.is_admin}
+            usr =  {"id": user.id, "name": user.name, "email": user.email, "created_on":user.created_on, "last_update":user.updated_on, "country": user.country,"is_admin": user.is_admin}
+            return usr
+            # json.dumps(usr, indent=4, separators=(",", ":"), sort_keys=True, cls=DateTimeEncoder)
         return {} # TODO this is bad practice
 
-    # @classmethod
-    # def add_user(cls, user):
-    #     try:
-    #         user = User(user.email, user.name,user.password, user.admin)
-    #         return user.save()
-    #     except Exception as e:
-    #         return e
+    @staticmethod
+    def get_user_by_mail(email):
+        return User.query.filter_by(email=email).first()
 
+    def check_password(self, pw):
+        return bcrypt.checkpw(pw, self.password)
 
     @staticmethod
     def update_user(user):
@@ -85,11 +86,12 @@ class User(Base):
                 "sub": self.id,
                 'is_admin': self.is_admin
             }
-            return jwt.encode(
+            token = jwt.encode(
                 payload,
                 app.config.get('SECRET_KEY'),
                 algorithm='HS256'
             )
+            return str(token)
         except Exception as e:
             return e
 
@@ -100,11 +102,20 @@ class User(Base):
         """
         try:
             payload = jwt.decode(auth_token, app.config.get('SECRET_KEY'))
-            return payload['sub'], payload["is_admin"]
+            return {
+                "status" : "valid",
+                "data" : {
+                    "id" : payload['sub'],
+                "is_admin" : payload["is_admin"]
+                }
+            }
         except jwt.ExpiredSignatureError:
-            return 'Signature expired. Please log in again.',False
+            return {
+                "status" : "Expired",
+                "message" : 'Signature expired. Please log in again.'
+            }
         except jwt.InvalidTokenError:
-            return 'Invalid token. Please log in again.',False
-
-
-
+            return {
+                "status" : "Invalid",
+                "message" : 'Invalid token. Please log in again.'
+            }

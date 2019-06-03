@@ -8,6 +8,9 @@ from project.app.config  import DevelopmentConfig
 import logging
 from flask_migrate import Migrate, MigrateCommand
 import click
+from flask import json
+from ..app.misc.logger import logger
+
 
 
 import unittest
@@ -21,13 +24,14 @@ bcrypt = Bcrypt(app)
 database = SQLAlchemy(app)
 from project.app.models.user import User
 from project.app.models.business import Business
+from project.app.models.blacklist import BlackListToken
 migrate =  Migrate(app,  database)
 
 # set defaukt vatriables to be availbla in default shell context
 @app.shell_context_processor
 def make_shell_context():
     return dict(app=app, db=database,
-               User=User, Business=Business
+               User=User, Business=Business,BlackListToken=BlackListToken
                )
 
 # @app.cli.command
@@ -48,22 +52,39 @@ def make_shell_context():
 #     tests = unittest.testLoader().discover('app/test', pattern='test*.py')
 #     test_runner = unittest.TextTestRunner(verbosity=2)
 #     test_runner.run(tests)
+from project.app.controllers.user_controller import api as user_namespace
+from flask_restplus import Api
+from flask import Blueprint
+
+blueprint = Blueprint('api', __name__)
+
+api = Api(
+        blueprint,
+        title='ACCOUNT-REX',
+        version='1.0',
+        description="An api for managing the finances of small scale businsesses "
+)
+api.add_namespace(user_namespace,path='/user')
+
+app.register_blueprint(blueprint, url_prefix='/api')
+
+app.app_context().push()
 
 
+# postman import 
 
-loglevels = {
-        "critical": logging.CRITICAL,
-        "error": logging.ERROR,
-        "warning": logging.WARNING,
-        "info": logging.INFO,
-        "debug": logging.DEBUG
-}
-logger = logging.getLogger(__name__)
-formatter = logging.Formatter('{asctime}s {levelname}s {message}s' )
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+basedir = os.path.abspath(os.path.dirname(".."))
 
-logger.setLevel(loglevels['debug'])
+postman_dir = os.path.join(basedir,'postman.json')
 
+def import_postman():
+        # logger.debug("writting to postman file ")
+        urlvars = True
+        swagger = True
+        data = api.as_postman(urlvars=urlvars, swagger=swagger)
+        file = open(postman_dir, 'w')
+        file.write(json.dumps(data))
+
+with app.app_context():
+        import_postman()
 

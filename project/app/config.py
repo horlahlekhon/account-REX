@@ -1,7 +1,8 @@
 import os
 import click
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+basedir = os.path.abspath(os.path.dirname("../../"))
+
 
 class BaseConfig:
     SECRET_KEY = os.getenv('SECRET_KEY', 'my_secret_key_')
@@ -10,6 +11,9 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class DevelopmentConfig(BaseConfig):
+    RSA_PUBLIC_KEY= os.path.join(basedir, 'keys/private')
+    RSA_PRIVATE_KEY=os.path.join(basedir, 'keys/public.pub')
+    SERVER_NAME = "localhost:5000"
     DEBUG = True
     user="postgres"
     db = "account_rex"
@@ -20,6 +24,8 @@ class DevelopmentConfig(BaseConfig):
 
 
 class TestingConfig(BaseConfig):
+    RSA_PUBLIC_KEY= os.path.join(basedir, 'keys/private')
+    RSA_PRIVATE_KEY=os.path.join(basedir, 'keys/public.pub')
     DEBUG = True
     user="postgres"
     db = "account_rex_test"

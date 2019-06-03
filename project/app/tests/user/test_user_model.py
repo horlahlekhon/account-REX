@@ -13,15 +13,16 @@ class TestUserModel(BaseTestCase):
         """
             test the encoding of jwt
         """
-        user = User(str(uuid.uuid4()),"Lekan","Horlahlekhin@gmail.com", "Lekan","Nigeria","true")
+        user = User(str(uuid.uuid4()),"Lekan","Horlahlekhin@gmail.com", "Lekan","Nigeria",True)
         user.save
         auth_token = user.encode_jwt()
+        self.assertTrue(auth_token)
         self.assertTrue(isinstance(auth_token, bytes))
 
     def test_decode_jwt(self):
 
         """test the decoding of JWT"""
-        user = User(str(uuid.uuid4()),"Lekan","Horlahlekhin@gmail.com", "Lekan","Nigeria","true")
+        user = User(str(uuid.uuid4()),"Lekan","Horlahlekhin@gmail.com", "Lekan","Nigeria",True)
         user.save
         auth_token = user.encode_jwt()
         object_id, is_admin = User.decode_jwt(auth_token)

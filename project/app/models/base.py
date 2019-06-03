@@ -12,11 +12,11 @@ class ModelMixin(object):
         """
             return a single object , given its primary key
         """
-        return cls.json(cls.query.filter_by(id=id).first())
+        return cls.query.filter_by(id=id).first()
 
     @classmethod
     def get_all_objects(cls):
-        return [cls.json(user) for user in cls.query.all()]
+        return  cls.query.all()
 
     @classmethod
     def delete_object(cls, object_id):

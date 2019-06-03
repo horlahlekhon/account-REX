@@ -7,7 +7,6 @@ from project.app.models.base import Base
 
 class Business(Base):
     __tablename__ = "businesses"
-    # TODO many to one relationship with tghe model User is not well configured, this should be done ASAP
 
     object_id = database.Column(database.Integer, primary_key=True, autoincrement=True)
     id = database.Column(database.String, nullable=False, unique=True)
@@ -24,15 +23,15 @@ class Business(Base):
         self.country = country
 
 
-    @classmethod 
+    @classmethod
     def json(cls, biz):
     #    owner =  User.get_object(biz.owner)
-       return {"name":biz.name, "owner" : biz.owner, "tax_percentage": biz.tax_percentage, "country":biz.country } 
+       return {"name":biz.name, "owner" : biz.user_id, "tax_percentage": biz.tax_percentage, "country":biz.country, "created_on": biz.created_on }
 
     @classmethod
     def add_biz(cls, biz):
         business = Business(biz.name, biz.owner, biz.tax_percentage, biz.country)
-        return business.save
+        return business.save()
 
     @classmethod
     def update_biz(cls, biz):
@@ -56,3 +55,4 @@ class Business(Base):
     # Business(id=uuid.uuid4(),name="Sisyphus inc.",user_id=1,tax_percentage=2.00, country="Nige
     # Business(bid, "Sisyphus inc.", 1, 2.00, "Nigerua")
     # usr = User(id,"Lekan","Horlahlekhin@gmail.com", "Lekan","Nigeria","true")
+    # biz = Business(uuid.uuid4(), "Gates Nigeria Limited", 1, 2.0, "Nigeria")

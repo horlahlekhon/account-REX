@@ -6,7 +6,7 @@ def save_token(token):
 
     try:
         database.session.add(black_T)
-        db.session.commit()
+        database.session.commit()
         response_object = {
             'status': 'success',
             'message': 'Successfully logged out.'

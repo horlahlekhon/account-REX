@@ -10,21 +10,19 @@ from ...app.misc.utils import DateTimeEncoder
 class User(Base):
     __tablename__ = "users"
 
-    object_id = database.Column(database.Integer, primary_key=True, autoincrement=True)
-    id =  database.Column(database.String, unique=True, nullable=False)
+    id = database.Column(database.Integer, primary_key=True, autoincrement=True)
+    # id =  database.Column(database.String, unique=True, nullable=False)
     name = database.Column(database.String(255), nullable=False)
-    email = database.Column(database.String(255), unique=True, nullable=False)
+    user_id = database.Column(database.String(255), unique=True, nullable=False)
     password = database.Column(database.String(255), nullable=False)
     country = database.Column(database.String(255) )
-    created_on = database.Column(database.DateTime, default=database.func.now())
-    updated_on = database.Column(database.DateTime, default=database.func.now(), onupdate=database.func.now())
-    businesses = database.relationship('Business', backref='users', cascade="all, delete-orphan", lazy='dynamic')
+    businesses = database.relationship('Business', backref='users',  lazy='dynamic', passive_deletes=True)
     is_admin = database.Column(database.Boolean, nullable=False, default=False)
 
-    def __init__(self,id, name, email, password,country,is_admin):
-        self.id = id
+# cascade="all, delete,delete-orphan",
+    def __init__(self, name, user_id, password,country,is_admin):
         self.name = name
-        self.email = email
+        self.user_id = user_id
         self.password = bcrypt.generate_password_hash(password, app.config.get('BCRYPT_LOG_ROUNDS')).decode()
         self.country = country
         self.is_admin = is_admin
@@ -35,7 +33,7 @@ class User(Base):
         """
         database.session.add(self)
         database.session.commit()
-        return self.id
+        return self.user_id
 
     def json(user):
         """
@@ -43,39 +41,40 @@ class User(Base):
         """
         #  TODO  what happens when this function is passed a None type this can happen if an object is required and it doesnt exist in db ?
         if user:
-            usr =  {"id": user.id, "name": user.name, "email": user.email, "created_on":user.created_on, "last_update":user.updated_on, "country": user.country,"is_admin": user.is_admin}
+            usr =  { "name": user.name, "user_id": user.user_id, "password":user.password, "created_on":user.created_on, "last_update":user.updated_on, "country": user.country,"is_admin": user.is_admin}
             return usr
             # json.dumps(usr, indent=4, separators=(",", ":"), sort_keys=True, cls=DateTimeEncoder)
         return {} # TODO this is bad practice
 
+    def get_object(cls, user_id):
+        return get_user_by_id(user_id)
+
     @staticmethod
-    def get_user_by_mail(email):
-        return User.query.filter_by(email=email).first()
+    def get_user_by_id(user_id):
+        return User.query.filter_by(user_id=user_id).first()
 
     def check_password(self, pw):
-        return bcrypt.checkpw(pw, self.password)
+        return bcrypt.check_password_hash(self.password, pw)
 
     @staticmethod
-    def update_user(user):
-        user_db = User.query.filter_by(user_id = user.object_id).first()
+    def update_user(user, user_id):
+        user_db = User.query.filter_by(user_id = user_id).first()
         if user_db:
-            if user["name"] != '':
+            if user.get('name') :
                 user_db.name = user["name"]
-            if user["email"] != '':
-                user_db.email = user["email"]
-            if user["password"] != '':
-                user_db.password = user["password"]
-            if user["is_admin"] != user["is_admin"]:
+            if user.get("password"):
+                user_db.password = bcrypt.generate_password_hash(user["password"], app.config.get("BCRYPT_LOG_ROUNDS")).decode()
+            if user.get('is_admin'):
                 user_db.is_admin = user["is_admin"]
             database.session.commit()
-            return User.json(user_db)
-        return user
+            return user_db
+        return user_db
 
 
     def encode_jwt(self):
         """
         Generate authentication token
-        returns : string 
+        returns : string
         """
         # TODO the jwt token package PyJwt has some issues with RSA keys, where it doesnt allow rsa keys that i generate locally, kindly see to this
         # TODO there might be  a better replacement for PyJwt which works , test them
@@ -83,7 +82,7 @@ class User(Base):
             payload = {
                 # "exp": datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
                 "iat": datetime.datetime.utcnow(),
-                "sub": self.id,
+                "sub": self.user_id,
                 'is_admin': self.is_admin
             }
             token = jwt.encode(
@@ -91,7 +90,7 @@ class User(Base):
                 app.config.get('SECRET_KEY'),
                 algorithm='HS256'
             )
-            return str(token)
+            return token
         except Exception as e:
             return e
 
@@ -105,7 +104,7 @@ class User(Base):
             return {
                 "status" : "valid",
                 "data" : {
-                    "id" : payload['sub'],
+                    "user_id" : payload['sub'],
                 "is_admin" : payload["is_admin"]
                 }
             }
@@ -119,3 +118,12 @@ class User(Base):
                 "status" : "Invalid",
                 "message" : 'Invalid token. Please log in again.'
             }
+
+    def get_all_biz(self):
+        return self.businesses
+
+    @classmethod
+    def delete_object(cls, id):
+        rows = cls.query.filter_by(id = id).delete()
+        database.session.commit()
+        return rows

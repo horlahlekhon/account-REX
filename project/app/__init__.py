@@ -53,6 +53,7 @@ def make_shell_context():
 #     test_runner = unittest.TextTestRunner(verbosity=2)
 #     test_runner.run(tests)
 from project.app.controllers.user_controller import api as user_namespace
+from project.app.controllers.authentication_controller import api as auth_namespace
 from flask_restplus import Api
 from flask import Blueprint
 
@@ -64,7 +65,8 @@ api = Api(
         version='1.0',
         description="An api for managing the finances of small scale businsesses "
 )
-api.add_namespace(user_namespace,path='/user')
+api.add_namespace(user_namespace, path='/user')
+api.add_namespace(auth_namespace)
 
 app.register_blueprint(blueprint, url_prefix='/api')
 

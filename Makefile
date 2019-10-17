@@ -16,7 +16,8 @@ test:
 	python manage.py test
 
 run:
-	python manage.py runserver
+	export FLASK_ENV=development
+	flask run
 
 all: clean install tests run
 
@@ -28,3 +29,4 @@ migrate:
 
 initdb:
 	python manage.py database init
+

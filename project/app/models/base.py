@@ -19,9 +19,8 @@ class ModelMixin(object):
         return  cls.query.all()
 
     @classmethod
-    def delete_object(cls, object_id):
-        rows = cls.query.filter_by(object_id = object_id).delete()
-        #return eval("{}.query.filter_by(object_id = {} ).delete()".format(cls, obj.object_id))
+    def delete_object(cls, id):
+        rows = cls.query.filter_by(object_id = id).delete()
         database.session.commit()
         return rows
 

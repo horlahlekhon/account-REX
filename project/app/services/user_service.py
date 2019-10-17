@@ -14,13 +14,13 @@ def validate(data):
     Returns:
         dict -- this dictionary describes ewhat happens and flag validated or not
     """
-    usr =  User.get_user_by_mail(data["email"])
+    usr =  User.get_user_by_id(data["user_id"])
     logger.debug("user returned check {} ".format(usr))
     if isinstance(usr, User) :
-        logger.debug("user exists already with that email == {}".format(usr))
+        logger.debug("user exists already with that user_id == {}".format(usr))
         response_obj = {
             "status" : "failed",
-            "message" : "user with that email already exists",
+            "message" : "user with that user_id already exists",
         }
         return response_obj, False
     if data["password"] == "" or len(data["password"]) < 8 :
@@ -42,9 +42,8 @@ def register_new_user(data):
     if validation[0]["status"] == "success":
         print("user validation status  == {}".format(validate(data)[0]["status"]))
         new_user = User(
-            id=uuid.uuid4(),
             name=data["name"],
-            email=data["email"],
+            user_id=data["user_id"],
             password=data["password"],
             country=data["country"],
             is_admin=data['is_admin']
@@ -63,7 +62,7 @@ def generate_token(user):
         response_object = {
             "status": "success",
             "message": "successfully created",
-            "authentication": auth_token
+            "authentication": auth_token.decode() # this cponvert the byte to string that can be loaded into json
         }
         return response_object
     except Exception as e:
@@ -75,10 +74,10 @@ def generate_token(user):
         return response_obj
 
 
-def get_user(id):
-    user = User.get_object(id)
+def get_user(user_id):
+    user = User.get_user_by_id(user_id=user_id)
     if user:
-        logger.debug("user id = {}".format(user.id))
+        logger.debug("user user_id = {}".format(user.user_id))
         return User.json(user), 200
     response_obj = {
         "status": "failed",
@@ -87,10 +86,32 @@ def get_user(id):
     logger.debug(response_obj["message"])
     return response_obj, 404
 
-
 def get_users():
     return [user for user in  User.get_all_objects()], 200
 
 
-def update_user(data):
-    return User.update_user(data), 200
+def update_user(data, user_id):
+    user = User.get_user_by_id(user_id=user_id)
+    if user:
+        logger.debug("user user_id to be updated == {}".format(user_id))
+        return User.update_user(data, user_id), 204
+    response_obj = {
+        "status" : "failed",
+        "message" : "user not found"
+    }
+    return response_obj, 404
+
+def delete_user(user_id):
+    usr =  User.get_user_by_id(user_id)
+    count = User.delete_object(usr.id)
+    if count >= 1:
+        response_obj = {
+            "status" : "success",
+            "message": "user with user_id {} is successfully deleted".format(user_id)
+        }
+        return response_obj, 201
+    response_obj = {
+        "status": "failed",
+        "message" : "user doesnt exist"
+    }
+    return response_obj, 404

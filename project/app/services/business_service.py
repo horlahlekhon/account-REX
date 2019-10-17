@@ -4,8 +4,8 @@ import uuid
 from project.app import logger
 # from psycopg2 import IntegrityError
 
-def save_biz(biz):
-    user = User.get_object(biz["user_id"])
+def create_biz(biz):
+    user = User.get_user_by_mail(biz["user_id"])
     if  user:
         business = Business(
             id = uuid.uuid4(),
@@ -51,34 +51,58 @@ def get_biz(id, user_id):
 
     user = User.get_object(user_id)
     if user:
-        biz = user.businesses.filter_by(id=id).first()
-        if biz:
-            return Business.json(biz), 200
-        response = {
-            "status" : "failed",
-            "message" : "The requested business is not found"
-        }
-        return response, 404
+        biz = user.businesses.filter_by(id=id)
+        return biz, 200
     response = {
         "status" : "failed",
         "message" : "the user is not valid"
     }
     return response, 400
 
-def get_all_biz(user):
+def get_all_biz(user=None):
     """
     get_all_biz gets all businesses for  a particular user
 
     Returns:
         List -- A list of busnesses that belongs to the logged in user
     """
-    usr = User.get_object(user)
     if user:
-        return [Business.json(biz) for biz in usr.busnesses.all()], 200
+        usr = User.get_object(user)
+        if usr:
+            return usr.businesses.all(), 200
+        response_obj = {
+            "status" : "failed",
+            "message" :  "the user is not valid"
+        }
+        return response_obj, 403
+    return Business.get_all_objects, 200
+
+def update_biz(id, data, user_id):
+
+    user =  User.get_user_by_id(user_id)
+    biz = Business.get_object(id)
+    if user and biz:
+        return Business.update_biz(id, data), 201
     response_obj = {
-        "status" : "failed",
-        "message" :  "the user is not valid"
+        "status" :"failed",
+        "message" : "The business is not valid"
     }
-    return response_obj, 400
+    return response_obj, 406
+
+def delete_business(user_id, id):
+    usr = User.get_user_by_id(user_id)
+    if usr:
+        bizs = usr.businesses.filter_by(id=id).delete()
+        resp = {
+            "status" : "success",
+            "message" : "entries deleted : {}".format(bizs)
+        }
+        return resp, 200
+    resp = {
+        "status" : "failed",
+        "message" :"invalid user"
+    }
+    return resp, 403
+
 
 

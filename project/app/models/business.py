@@ -11,7 +11,7 @@ class Business(Base):
     object_id = database.Column(database.Integer, primary_key=True, autoincrement=True)
     id = database.Column(database.String, nullable=False, unique=True)
     name = database.Column(database.String, nullable=False)
-    user_id = database.Column(database.Integer, database.ForeignKey('users.object_id'))
+    user_id = database.Column(database.String(255), database.ForeignKey('users.user_id', ondelete='CASCADE'))
     tax_percentage = database.Column(database.Float, nullable=False)
     country = database.Column(database.String)
 
@@ -38,14 +38,13 @@ class Business(Base):
         business = Business.get_object(biz.object_id)
         if biz["name"] != '':
             business.name = biz["name"]
-        if biz["owner"] != business.owner.object_id and biz["owner"] != 0 :
-            owner = User.get_object(biz["owner"])
-            business.owner = biz["owner"]
-        if biz["tax_percentage"] != 0.0:
+        if biz.get("user_id") :
+            owner = User.get_object(biz["user_id"])
+            owner.businesses.append(business) # append the editied business to the list of businesses of the new user
+        if biz.get("tax_percentage"):
             business.tax_percentage = biz["tax_percentage"]
-        if biz["country"] != business.country and biz["country"] != 0:
-            country = Country.get_object(biz["country"])
-            business.country = country.object_id
+        if biz.get("country"):
+            business.country = biz["country"]
         database.session.commit()
         return business
 
